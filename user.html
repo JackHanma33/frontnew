@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>User Inventory</title>
+	<link rel="stylesheet" href="styles/user-style.css" />
+	<link rel="icon" href="logo.png" type="image/png" />
+</head>
+<body>
+	<div class="main-container">
+		<div class="header-section">
+			<div class="user-info">
+				<div class="avatar-container">
+					<img id="user-avatar" src="" alt="User Avatar" />
+				</div>
+				<div class="user-details">
+					<div class="nickname" id="user-nickname"></div>
+					<div class="balance-container">
+						<div class="balance-icon">₽</div>
+						<div class="balance" id="user-balance">0.00</div>
+						<button class="deposit-button">ПОПОЛНИТЬ</button>
+					</div>
+				</div>
+			</div>
+			<div class="action-buttons">
+				<a href="index.html" class="back-button">К ОСНОВНОМУ</a>
+			</div>
+		</div>
+
+		<div class="nav-tabs">
+			<div class="tab active">
+				<img src="inventory-icon.png" alt="Inventory" class="tab-icon" />
+				<span>ПРЕДМЕТЫ</span>
+				<span class="item-count" id="inventory-count">0</span>
+			</div>
+			<div class="tab">
+				<img src="contacts-icon.png" alt="Contacts" class="tab-icon" />
+				<span>КОНТАКТЫ</span>
+				<span class="item-count">0</span>
+			</div>
+			<div class="tab">
+				<img src="upgrade-icon.png" alt="Upgrades" class="tab-icon" />
+				<span>АПГРЕЙДЫ</span>
+				<span class="item-count">0</span>
+			</div>
+			<div class="tab">
+				<img src="battles-icon.png" alt="Battles" class="tab-icon" />
+				<span>БИТВЫ</span>
+				<span class="item-count">0</span>
+			</div>
+		</div>
+
+		<div class="inventory-container" id="inventory-grid"></div>
+
+		<div class="show-more">
+			<button id="show-more-btn">ПОКАЗАТЬ ЕЩЕ</button>
+		</div>
+	</div>
+
+	<template id="item-template">
+		<div class="inventory-item">
+			<div class="item-image-container">
+				<img class="item-image" src="" alt="Item" />
+			</div>
+			<div class="item-details">
+				<div class="item-type"></div>
+				<div class="item-name"></div>
+			</div>
+			<div class="item-actions">
+				<button class="sell-button">ПРОДАТЬ</button>
+			</div>
+		</div>
+	</template>
+
+	<style>
+		.disabled-button {
+			background-color: #888;
+			cursor: not-allowed;
+			opacity: 0.7;
+		}
+		.item-status {
+			color: #ff9800;
+			font-size: 12px;
+			margin-top: 5px;
+			font-weight: bold;
+		}
+	</style>
+
+	<script src="./scripts/to-user.js"></script>
+	<script>
+		let sessionHeader = null;
+
+		toUser((user, sessionId) => {
+			sessionHeader = sessionId;
+
+			if (user) {
+				const userData = Array.isArray(user) ? user[0] : user;
+
+				document.getElementById('user-avatar').src =
+					userData.avatar_url || '';
+				document.getElementById('user-nickname').textContent =
+					userData.nickname || 'User';
+				document.getElementById('user-balance').textContent =
+					userData.balance ? `${userData.balance}₽` : '0.00₽';
+
+				const inventoryCount = userData.inventory
+					? userData.inventory.length
+					: 0;
+				document.getElementById('inventory-count').textContent =
+					inventoryCount;
+
+				populateInventory(userData.inventory || []);
+			}
+		});
+
+		function populateInventory(inventory) {
+			const inventoryGrid = document.getElementById('inventory-grid');
+			const template = document.getElementById('item-template');
+
+			inventoryGrid.innerHTML = '';
+
+			inventory.forEach(inventoryItem => {
+				const item = inventoryItem.item;
+				const itemElement = template.content.cloneNode(true);
+
+				const imageUrl =
+					item.item_image && item.item_image.length > 0
+						? item.item_image[0].image
+						: 'default-weapon.png';
+
+				itemElement.querySelector('.item-image').src = imageUrl.includes('http')
+					? imageUrl
+					: `https://jackhanmacsgolkgame.pythonanywhere.com${imageUrl}`;
+
+				itemElement.querySelector('.item-type').textContent = 'P2000';
+				itemElement.querySelector('.item-name').textContent = item.name;
+
+				const sellButton = itemElement.querySelector('.sell-button');
+				if (inventoryItem.status === 'продан' || inventoryItem.status) {
+					sellButton.textContent = 'ПРОДАНО';
+					sellButton.disabled = true;
+					sellButton.classList.add('disabled-button');
+
+					const statusDiv = document.createElement('div');
+					statusDiv.className = 'item-status';
+					statusDiv.textContent = inventoryItem.status || 'Статус неизвестен';
+					itemElement.querySelector('.item-details').appendChild(statusDiv);
+				} else {
+					sellButton.setAttribute('data-item-id', inventoryItem.id);
+					sellButton.addEventListener('click', () => {
+						sellItem(inventoryItem.id, item.name, item.price);
+					});
+				}
+
+				inventoryGrid.appendChild(itemElement);
+			});
+
+			if (inventory.length === 0) {
+				const emptyMessage = document.createElement('div');
+				emptyMessage.className = 'empty-inventory';
+				emptyMessage.textContent = 'У вас пока нет предметов в инвентаре';
+				inventoryGrid.appendChild(emptyMessage);
+			}
+		}
+
+		document.getElementById('show-more-btn').addEventListener('click', () => {
+			alert('Загрузка дополнительных предметов...');
+		});
+
+		function sellItem(itemId, itemName, itemPrice) {
+			if (!confirm(`Вы уверены, что хотите продать ${itemName}?`)) return;
+
+			if (!sessionHeader) {
+				alert('Ошибка авторизации. Пожалуйста, перезагрузите страницу.');
+				return;
+			}
+
+			fetch(`https://jackhanmacsgolkgame.pythonanywhere.com/items/${itemId}/sell/`, {
+				method: 'PATCH',
+				headers: {
+					'Content-Type': 'application/json',
+					...sessionHeader
+				},
+				body: JSON.stringify({})
+			})
+			.then(response => {
+				if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+				return response.json();
+			})
+			.then(data => {
+				alert(`Предмет ${itemName} успешно продан!`);
+
+				document.getElementById('user-balance').textContent = `${data.balance}₽`;
+
+				const sellButton = document.querySelector(`[data-item-id="${itemId}"]`);
+				if (sellButton) {
+					const itemElement = sellButton.closest('.inventory-item');
+					sellButton.textContent = 'ПРОДАНО';
+					sellButton.disabled = true;
+					sellButton.classList.add('disabled-button');
+
+					const statusDiv = document.createElement('div');
+					statusDiv.className = 'item-status';
+					statusDiv.textContent = 'продан';
+					itemElement.querySelector('.item-details').appendChild(statusDiv);
+				}
+
+				// Обновляем данные пользователя на frontend после продажи
+				if (sessionHeader) {
+					fetch('https://jackhanmacsgolkgame.pythonanywhere.com/ru/user/', {
+						method: 'GET',
+						headers: {
+							'Content-Type': 'application/json',
+							...sessionHeader
+						}
+					})
+					.then(response => response.json())
+					.then(userData => {
+						if (typeof sessionStorage !== 'undefined') {
+							sessionStorage.setItem('userData', JSON.stringify(userData));
+						}
+					})
+					.catch(error =>
+						console.error('Error updating user data:', error)
+					);
+				}
+			})
+			.catch(error => {
+				console.error('Error selling item:', error);
+				alert('Произошла ошибка при продаже предмета. Пожалуйста, попробуйте снова.');
+			});
+		}
+	</script>
+</body>
+</html>
