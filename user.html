@@ -1,236 +1,539 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-	<meta charset="UTF-8" />
-	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title>User Inventory</title>
-	<link rel="stylesheet" href="styles/user-style.css" />
-	<link rel="icon" href="logo.png" type="image/png" />
-</head>
-<body>
-	<div class="main-container">
-		<div class="header-section">
-			<div class="user-info">
-				<div class="avatar-container">
-					<img id="user-avatar" src="" alt="User Avatar" />
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>User Inventory</title>
+		<link rel="stylesheet" href="styles/user-style.css" />
+		<link rel="icon" href="logo.png" type="image/png" />
+	</head>
+	<body>
+		<div class="main-container">
+			<div class="header-section">
+				<div class="user-info">
+					<div class="avatar-container">
+						<img id="user-avatar" src="" alt="User Avatar" />
+					</div>
+					<div class="user-details">
+						<div class="nickname" id="user-nickname"></div>
+						<div class="balance-container">
+							<div class="balance-icon">₽</div>
+							<div class="balance" id="user-balance">0.00</div>
+							<button class="deposit-button" id="depositButton">ПОПОЛНИТЬ</button>
+						</div>
+					</div>
 				</div>
-				<div class="user-details">
-					<div class="nickname" id="user-nickname"></div>
-					<div class="balance-container">
-						<div class="balance-icon">₽</div>
-						<div class="balance" id="user-balance">0.00</div>
-						<button class="deposit-button">ПОПОЛНИТЬ</button>
+				<div class="action-buttons">
+					<a href="index.html" class="back-button">К ОСНОВНОМУ</a>
+				</div>
+			</div>
+
+			<div class="nav-tabs">
+				<div class="tab active">
+					<img src="inventory-icon.png" alt="Inventory" class="tab-icon" />
+					<span>ПРЕДМЕТЫ</span>
+					<span class="item-count" id="inventory-count">0</span>
+				</div>
+				<div class="tab">
+					<img src="contacts-icon.png" alt="Contacts" class="tab-icon" />
+					<span>КОНТАКТЫ</span>
+					<span class="item-count">0</span>
+				</div>
+				<div class="tab">
+					<img src="upgrade-icon.png" alt="Upgrades" class="tab-icon" />
+					<span>АПГРЕЙДЫ</span>
+					<span class="item-count">0</span>
+				</div>
+				<div class="tab">
+					<img src="battles-icon.png" alt="Battles" class="tab-icon" />
+					<span>БИТВЫ</span>
+					<span class="item-count">0</span>
+				</div>
+			</div>
+
+			<div class="inventory-container" id="inventory-grid"></div>
+
+			<div class="show-more">
+				<button id="show-more-btn">ПОКАЗАТЬ ЕЩЕ</button>
+			</div>
+
+			<!-- Модальное окно для пополнения -->
+			<div class="modal" id="depositModal">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h2 class="modal-title">Пополнить баланс</h2>
+						<button class="close-button" id="closeDepositModal">×</button>
+					</div>
+					<div class="modal-body">
+						<form id="depositForm">
+							<div class="form-group">
+								<label for="depositAmount">Сумма (₽):</label>
+								<input
+									type="number"
+									id="depositAmount"
+									name="amount"
+									min="100"
+									step="1"
+									placeholder="Введите сумму"
+									required
+								/>
+							</div>
+							<div class="form-group">
+								<label for="paymentMethod">Способ оплаты:</label>
+								<select id="paymentMethod" name="payment_method" required>
+									<option value="card">Банковская карта</option>
+									<option value="sbp">СБП (Система быстрых платежей)</option>
+									<option value="yoomoney">ЮMoney</option>
+									<option value="qiwi">QIWI</option>
+								</select>
+							</div>
+							<button type="submit" class="button submit-button">Пополнить</button>
+						</form>
 					</div>
 				</div>
 			</div>
-			<div class="action-buttons">
-				<a href="index.html" class="back-button">К ОСНОВНОМУ</a>
-			</div>
 		</div>
 
-		<div class="nav-tabs">
-			<div class="tab active">
-				<img src="inventory-icon.png" alt="Inventory" class="tab-icon" />
-				<span>ПРЕДМЕТЫ</span>
-				<span class="item-count" id="inventory-count">0</span>
+		<template id="item-template">
+			<div class="inventory-item">
+				<div class="item-image-container">
+					<img class="item-image" src="" alt="Item" />
+				</div>
+				<div class="item-details">
+					<div class="item-type"></div>
+					<div class="item-name"></div>
+				</div>
+				<div class="item-actions">
+					<button class="sell-button">ПРОДАТЬ</button>
+				</div>
 			</div>
-			<div class="tab">
-				<img src="contacts-icon.png" alt="Contacts" class="tab-icon" />
-				<span>КОНТАКТЫ</span>
-				<span class="item-count">0</span>
-			</div>
-			<div class="tab">
-				<img src="upgrade-icon.png" alt="Upgrades" class="tab-icon" />
-				<span>АПГРЕЙДЫ</span>
-				<span class="item-count">0</span>
-			</div>
-			<div class="tab">
-				<img src="battles-icon.png" alt="Battles" class="tab-icon" />
-				<span>БИТВЫ</span>
-				<span class="item-count">0</span>
-			</div>
-		</div>
+		</template>
 
-		<div class="inventory-container" id="inventory-grid"></div>
-
-		<div class="show-more">
-			<button id="show-more-btn">ПОКАЗАТЬ ЕЩЕ</button>
-		</div>
-	</div>
-
-	<template id="item-template">
-		<div class="inventory-item">
-			<div class="item-image-container">
-				<img class="item-image" src="" alt="Item" />
-			</div>
-			<div class="item-details">
-				<div class="item-type"></div>
-				<div class="item-name"></div>
-			</div>
-			<div class="item-actions">
-				<button class="sell-button">ПРОДАТЬ</button>
-			</div>
-		</div>
-	</template>
-
-	<style>
-		.disabled-button {
-			background-color: #888;
-			cursor: not-allowed;
-			opacity: 0.7;
-		}
-		.item-status {
-			color: #ff9800;
-			font-size: 12px;
-			margin-top: 5px;
-			font-weight: bold;
-		}
-	</style>
-
-	<script src="./scripts/to-user.js"></script>
-	<script>
-		let sessionHeader = null;
-
-		toUser((user, sessionId) => {
-			sessionHeader = sessionId;
-
-			if (user) {
-				const userData = Array.isArray(user) ? user[0] : user;
-
-				document.getElementById('user-avatar').src =
-					userData.avatar_url || '';
-				document.getElementById('user-nickname').textContent =
-					userData.nickname || 'User';
-				document.getElementById('user-balance').textContent =
-					userData.balance ? `${userData.balance}₽` : '0.00₽';
-
-				const inventoryCount = userData.inventory
-					? userData.inventory.length
-					: 0;
-				document.getElementById('inventory-count').textContent =
-					inventoryCount;
-
-				populateInventory(userData.inventory || []);
+		<style>
+			.disabled-button {
+				background-color: #888;
+				cursor: not-allowed;
+				opacity: 0.7;
 			}
-		});
+			.item-status {
+				color: #ff9800;
+				font-size: 12px;
+				margin-top: 5px;
+				font-weight: bold;
+			}
+			.modal {
+				display: none;
+				position: fixed;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				background-color: rgba(0, 0, 0, 0.5);
+				z-index: 1000;
+				justify-content: center;
+				align-items: center;
+			}
+			.modal.show {
+				display: flex;
+			}
+			.modal-content {
+				background-color: #1e1e1e;
+				padding: 20px;
+				border-radius: 8px;
+				width: 400px;
+				max-width: 90%;
+				color: #fff;
+				position: relative;
+			}
+			.modal-header {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				margin-bottom: 20px;
+			}
+			.modal-title {
+				font-size: 20px;
+				font-weight: bold;
+			}
+			.close-button {
+				background: none;
+				border: none;
+				color: #fff;
+				font-size: 20px;
+				cursor: pointer;
+			}
+			.form-group {
+				margin-bottom: 15px;
+			}
+			.form-group label {
+				display: block;
+				margin-bottom: 5px;
+				font-size: 14px;
+			}
+			.form-group input,
+			.form-group select {
+				width: 100%;
+				padding: 10px;
+				border-radius: 4px;
+				border: 1px solid #444;
+				background-color: #2a2a2a;
+				color: #fff;
+				font-size: 14px;
+			}
+			.submit-button {
+				width: 100%;
+				padding: 10px;
+				background-color: #ff9800;
+				border: none;
+				border-radius: 4px;
+				color: #fff;
+				font-size: 16px;
+				cursor: pointer;
+			}
+			.submit-button:hover {
+				background-color: #e68900;
+			}
+			.submit-button:disabled {
+				background-color: #888;
+				cursor: not-allowed;
+			}
+		</style>
 
-		function populateInventory(inventory) {
-			const inventoryGrid = document.getElementById('inventory-grid');
-			const template = document.getElementById('item-template');
+		<script src="./scripts/to-user.js"></script>
+		<script>
+			let sessionHeader = null;
 
-			inventoryGrid.innerHTML = '';
-
-			inventory.forEach(inventoryItem => {
-				const item = inventoryItem.item;
-				const itemElement = template.content.cloneNode(true);
-
-				const imageUrl =
-					item.item_image && item.item_image.length > 0
-						? item.item_image[0].image
-						: 'default-weapon.png';
-
-				itemElement.querySelector('.item-image').src = imageUrl.includes('http')
-					? imageUrl
-					: `https://jackhanmacsgolkgame.pythonanywhere.com${imageUrl}`;
-
-				itemElement.querySelector('.item-type').textContent = 'P2000';
-				itemElement.querySelector('.item-name').textContent = item.name;
-
-				const sellButton = itemElement.querySelector('.sell-button');
-				if (inventoryItem.status === 'продан' || inventoryItem.status) {
-					sellButton.textContent = 'ПРОДАНО';
-					sellButton.disabled = true;
-					sellButton.classList.add('disabled-button');
-
-					const statusDiv = document.createElement('div');
-					statusDiv.className = 'item-status';
-					statusDiv.textContent = inventoryItem.status || 'Статус неизвестен';
-					itemElement.querySelector('.item-details').appendChild(statusDiv);
-				} else {
-					sellButton.setAttribute('data-item-id', inventoryItem.id);
-					sellButton.addEventListener('click', () => {
-						sellItem(inventoryItem.id, item.name, item.price);
-					});
+			function normalizeNumber(value) {
+				if (value == null) return 0;
+				if (typeof value === 'number') return isFinite(value) ? value : 0;
+				if (typeof value === 'string') {
+					const cleaned = value.trim().replace(/[^0-9.-]/g, '').replace(',', '.');
+					const parsed = parseFloat(cleaned);
+					return isNaN(parsed) || !isFinite(parsed) ? 0 : parsed;
 				}
+				return 0;
+			}
 
-				inventoryGrid.appendChild(itemElement);
+			toUser((user, sessionId) => {
+				sessionHeader = sessionId;
+				if (user) {
+					const userData = Array.isArray(user) ? user[0] : user;
+
+					document.getElementById('user-avatar').src =
+						userData.avatar_url || '';
+					document.getElementById('user-nickname').textContent =
+						userData.nickname || 'User';
+					document.getElementById('user-balance').textContent =
+						normalizeNumber(userData.balance).toFixed(2);
+
+					const inventoryCount = userData.inventory
+						? userData.inventory.length
+						: 0;
+					document.getElementById('inventory-count').textContent =
+						inventoryCount;
+
+					populateInventory(userData.inventory || []);
+				}
 			});
 
-			if (inventory.length === 0) {
-				const emptyMessage = document.createElement('div');
-				emptyMessage.className = 'empty-inventory';
-				emptyMessage.textContent = 'У вас пока нет предметов в инвентаре';
-				inventoryGrid.appendChild(emptyMessage);
+			function populateInventory(inventory) {
+				const inventoryGrid = document.getElementById('inventory-grid');
+				const template = document.getElementById('item-template');
+
+				inventoryGrid.innerHTML = '';
+
+				inventory.forEach(inventoryItem => {
+					const item = inventoryItem.item;
+					const itemElement = template.content.cloneNode(true);
+					const itemPrice = itemElement.querySelector('.item-price');
+
+					if (itemPrice) {
+						if (inventoryItem.price_for_sale) {
+							itemPrice.textContent = `${normalizeNumber(inventoryItem.price_for_sale)}₽`;
+						} else {
+							itemPrice.textContent = `${normalizeNumber(item.price)}₽`;
+						}
+					}
+
+					const imageUrl =
+						item.item_image && item.item_image.length > 0
+							? item.item_image[0].image
+							: 'default-weapon.png';
+
+					itemElement.querySelector('.item-image').src = imageUrl.includes(
+						'http'
+					)
+						? imageUrl
+						: `https://jackhanmacsgolkgame.pythonanywhere.com${imageUrl}`;
+
+					itemElement.querySelector('.item-type').textContent = 'P2000';
+					itemElement.querySelector('.item-name').textContent = item.name;
+
+					const sellButton = itemElement.querySelector('.sell-button');
+					if (inventoryItem.status === 'продан' || inventoryItem.status) {
+						sellButton.textContent = 'ПРОДАНО';
+						sellButton.disabled = true;
+						sellButton.classList.add('disabled-button');
+
+						const statusDiv = document.createElement('div');
+						statusDiv.className = 'item-status';
+						statusDiv.textContent = inventoryItem.status || 'Статус неизвестен';
+						itemElement.querySelector('.item-details').appendChild(statusDiv);
+					} else {
+						sellButton.setAttribute('data-item-id', inventoryItem.id);
+						sellButton.addEventListener('click', () => {
+							sellItem(inventoryItem.id, item.name, item.price);
+						});
+					}
+
+					inventoryGrid.appendChild(itemElement);
+				});
+
+				if (inventory.length === 0) {
+					const emptyMessage = document.createElement('div');
+					emptyMessage.className = 'empty-inventory';
+					emptyMessage.textContent = 'У вас пока нет предметов в инвентаре';
+					inventoryGrid.appendChild(emptyMessage);
+				}
 			}
-		}
 
-		document.getElementById('show-more-btn').addEventListener('click', () => {
-			alert('Загрузка дополнительных предметов...');
-		});
+			document.getElementById('show-more-btn').addEventListener('click', () => {
+				alert('Загрузка дополнительных предметов...');
+			});
 
-		function sellItem(itemId, itemName, itemPrice) {
-			if (!confirm(`Вы уверены, что хотите продать ${itemName}?`)) return;
-
-			if (!sessionHeader) {
-				alert('Ошибка авторизации. Пожалуйста, перезагрузите страницу.');
-				return;
-			}
-
-			fetch(`https://jackhanmacsgolkgame.pythonanywhere.com/items/${itemId}/sell/`, {
-				method: 'PATCH',
-				headers: {
-					'Content-Type': 'application/json',
-					...sessionHeader
-				},
-				body: JSON.stringify({})
-			})
-			.then(response => {
-				if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-				return response.json();
-			})
-			.then(data => {
-				alert(`Предмет ${itemName} успешно продан!`);
-
-				document.getElementById('user-balance').textContent = `${data.balance}₽`;
-
-				const sellButton = document.querySelector(`[data-item-id="${itemId}"]`);
-				if (sellButton) {
-					const itemElement = sellButton.closest('.inventory-item');
-					sellButton.textContent = 'ПРОДАНО';
-					sellButton.disabled = true;
-					sellButton.classList.add('disabled-button');
-
-					const statusDiv = document.createElement('div');
-					statusDiv.className = 'item-status';
-					statusDiv.textContent = 'продан';
-					itemElement.querySelector('.item-details').appendChild(statusDiv);
+			function sellItem(itemId, itemName, itemPrice) {
+				if (!confirm(`Вы уверены, что хотите продать ${itemName}?`)) {
+					return;
 				}
 
-				// Обновляем данные пользователя на frontend после продажи
-				if (sessionHeader) {
-					fetch('https://jackhanmacsgolkgame.pythonanywhere.com/ru/user/', {
-						method: 'GET',
+				if (!sessionHeader) {
+					alert('Ошибка авторизации. Пожалуйста, перезагрузите страницу.');
+					return;
+				}
+
+				fetch(
+					`https://jackhanmacsgolkgame.pythonanywhere.com/items/${itemId}/sell/`,
+					{
+						method: 'PATCH',
 						headers: {
 							'Content-Type': 'application/json',
 							...sessionHeader
+						},
+						body: JSON.stringify({})
+					}
+				)
+					.then(response => {
+						if (!response.ok) {
+							throw new Error(`HTTP error! Status: ${response.status}`);
 						}
+						return response.json();
 					})
+					.then(data => {
+						alert(`Предмет ${itemName} успешно продан!`);
+
+						const responseData = {
+							balance: data.balance,
+							message: data.message
+						};
+						document.getElementById('user-balance').textContent =
+							normalizeNumber(responseData.balance).toFixed(2);
+
+						const sellButton = document.querySelector(
+							`[data-item-id="${itemId}"]`
+						);
+						if (sellButton) {
+							const itemElement = sellButton.closest('.inventory-item');
+
+							sellButton.textContent = 'ПРОДАНО';
+							sellButton.disabled = true;
+							sellButton.classList.add('disabled-button');
+
+							const statusDiv = document.createElement('div');
+							statusDiv.className = 'item-status';
+							statusDiv.textContent = 'продан';
+							itemElement.querySelector('.item-details').appendChild(statusDiv);
+						}
+
+						fetch('https://jackhanmacsgolkgame.pythonanywhere.com/user/', {
+							method: 'GET',
+							headers: sessionHeader
+						})
+							.then(response => response.json())
+							.then(userData => {
+								if (typeof sessionStorage !== 'undefined') {
+									sessionStorage.setItem('userData', JSON.stringify(userData));
+								}
+							})
+							.catch(error =>
+								console.error('Error updating user data:', error)
+							);
+					})
+					.catch(error => {
+						console.error('Error selling item:', error);
+						alert(
+							'Произошла ошибка при продаже предмета. Пожалуйста, попробуйте снова.'
+						);
+					});
+			}
+
+			// пополнение бланса 
+			const depositButton = document.getElementById('depositButton');
+			const depositModal = document.getElementById('depositModal');
+			const closeDepositModal = document.getElementById('closeDepositModal');
+			const depositForm = document.getElementById('depositForm');
+
+			depositButton.addEventListener('click', () => {
+				if (!sessionHeader) {
+					alert('Пожалуйста, авторизуйтесь для пополнения баланса.');
+					return;
+				}
+				depositModal.classList.add('show');
+			});
+
+			closeDepositModal.addEventListener('click', () => {
+				depositModal.classList.remove('show');
+				depositForm.reset();
+			});
+
+			depositForm.addEventListener('submit', async e => {
+				e.preventDefault();
+				const amount = normalizeNumber(document.getElementById('depositAmount').value);
+				const paymentMethod = document.getElementById('paymentMethod').value;
+
+				if (amount < 100) {
+					alert('Минимальная сумма пополнения — 100₽.');
+					return;
+				}
+
+				if (!sessionHeader) {
+					alert('Ошибка авторизации. Пожалуйста, перезагрузите страницу.');
+					return;
+				}
+
+				try {
+					const response = await fetch(
+						'https://jackhanmacsgolkgame.pythonanywhere.com/payment/create/',
+						{
+							method: 'POST',
+							headers: {
+								'Content-Type': 'application/json',
+								...sessionHeader
+							},
+							body: JSON.stringify({
+								amount,
+								payment_method: paymentMethod,
+								return_url: window.location.href
+							})
+						}
+					);
+
+					const data = await response.json();
+					if (!response.ok) {
+						throw new Error(data.error || 'Ошибка при создании платежа');
+					}
+
+					if (data.payment_url) {
+						window.location.href = data.payment_url;
+					} else {
+						throw new Error('Не получен URL для оплаты');
+					}
+				} catch (error) {
+					console.error('Ошибка пополнения:', error);
+					alert('Не удалось инициировать пополнение. Попробуйте снова.');
+				}
+			});
+
+			function checkAndUpdateBalance() {
+				if (!sessionHeader) return;
+
+				fetch('https://jackhanmacsgolkgame.pythonanywhere.com/user/', {
+					method: 'GET',
+					headers: sessionHeader
+				})
 					.then(response => response.json())
 					.then(userData => {
+						const balance = normalizeNumber(userData.balance).toFixed(2);
+						document.getElementById('user-balance').textContent = balance;
 						if (typeof sessionStorage !== 'undefined') {
 							sessionStorage.setItem('userData', JSON.stringify(userData));
 						}
 					})
-					.catch(error =>
-						console.error('Error updating user data:', error)
-					);
+					.catch(error => console.error('Ошибка обновления баланса:', error));
+			}
+
+			// Проверка баланса при загрузке страницы
+			window.addEventListener('load', () => {
+				const urlParams = new URLSearchParams(window.location.search);
+				if (urlParams.get('payment') === 'success') {
+					checkAndUpdateBalance();
+					alert('Баланс успешно пополнен!');
 				}
-			})
-			.catch(error => {
-				console.error('Error selling item:', error);
-				alert('Произошла ошибка при продаже предмета. Пожалуйста, попробуйте снова.');
 			});
-		}
-	</script>
-</body>
+			depositForm.addEventListener('submit', async e => {
+    e.preventDefault();
+    const amount = normalizeNumber(document.getElementById('depositAmount').value);
+    const paymentMethod = document.getElementById('paymentMethod').value;
+
+    if (amount < 100) {
+        alert('Минимальная сумма пополнения — 100₽.');
+        return;
+    }
+
+    if (!sessionHeader) {
+        alert('Ошибка авторизации. Пожалуйста, перезагрузите страницу.');
+        return;
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    const csrfToken = getCookie('csrftoken');
+
+    try {
+        const response = await fetch(
+            'https://jackhanmacsgolkgame.pythonanywhere.com/payment/create/',
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...sessionHeader,
+                    'X-CSRFToken': csrfToken // Добавляем CSRF-токен
+                },
+                body: JSON.stringify({
+                    amount,
+                    payment_method: paymentMethod,
+                    return_url: 'http://127.0.0.1:5500/user.html?payment=success'
+                })
+            }
+        );
+
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.error || 'Ошибка при создании платежа');
+        }
+
+        if (data.payment_url) {
+            window.location.href = data.payment_url;
+        } else {
+            throw new Error('Не получен URL для оплаты');
+        }
+    } catch (error) {
+        console.error('Ошибка пополнения:', error);
+        alert('Не удалось инициировать пополнение. Попробуйте снова.');
+    }
+});
+		</script>
+	</body>
 </html>
