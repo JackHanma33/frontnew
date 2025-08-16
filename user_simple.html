@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>User Inventory</title>
+    <link rel="stylesheet" href="styles/user-style.css" />
+    <link rel="icon" href="logo.png" type="image/png" />
+</head>
+<body>
+<div class="main-container">
+    <div class="header-section">
+        <div class="user-info">
+            <div class="avatar-container">
+                <img id="user-avatar" src="" alt="User Avatar" />
+            </div>
+            <div class="user-details">
+                <div class="nickname" id="user-nickname"></div>
+                <div class="balance-container">
+                    <div class="balance-icon">₽</div>
+                    <div class="balance" id="user-balance">0.00</div>
+                    <button class="deposit-button" id="depositButton">ПОПОЛНИТЬ</button>
+                </div>
+            </div>
+        </div>
+        <div class="action-buttons">
+            <a href="index.html" class="back-button">К ОСНОВНОМУ</a>
+        </div>
+    </div>
+
+    <!-- Навигация и инвентарь опущены для краткости -->
+
+    <!-- Модальное окно для пополнения -->
+    <div class="modal" id="depositModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Пополнить баланс</h2>
+                <button class="close-button" id="closeDepositModal">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="depositForm">
+                    <div class="form-group">
+                        <label for="depositAmount">Сумма (₽):</label>
+                        <input
+                            type="number"
+                            id="depositAmount"
+                            name="amount"
+                            min="100"
+                            step="1"
+                            placeholder="Введите сумму"
+                            required
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label for="paymentMethod">Способ оплаты:</label>
+                        <select id="paymentMethod" name="payment_method" required>
+                            <option value="card">Банковская карта</option>
+                            <option value="sbp">СБП (Система быстрых платежей)</option>
+                            <option value="yoomoney">ЮMoney</option>
+                            <option value="qiwi">QIWI</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="button submit-button">Пополнить</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="./scripts/to-user.js"></script>
+<script>
+let sessionHeader = null;
+
+function normalizeNumber(value) {
+    if (value == null) return 0;
+    if (typeof value === 'number') return isFinite(value) ? value : 0;
+    if (typeof value === 'string') {
+        const cleaned = value.trim().replace(/[^0-9.-]/g, '').replace(',', '.');
+        const parsed = parseFloat(cleaned);
+        return isNaN(parsed) || !isFinite(parsed) ? 0 : parsed;
+    }
+    return 0;
+}
+
+// Получаем данные пользователя
+toUser((user, sessionId) => {
+    sessionHeader = sessionId;
+    if (user) {
+        const userData = Array.isArray(user) ? user[0] : user;
+        document.getElementById('user-avatar').src = userData.avatar_url || '';
+        document.getElementById('user-nickname').textContent = userData.nickname || 'User';
+        document.getElementById('user-balance').textContent = normalizeNumber(userData.balance).toFixed(2);
+    }
+});
+
+// Логика открытия и закрытия модального окна
+const depositButton = document.getElementById('depositButton');
+const depositModal = document.getElementById('depositModal');
+const closeDepositModal = document.getElementById('closeDepositModal');
+const depositForm = document.getElementById('depositForm');
+
+depositButton.addEventListener('click', () => {
+    if (!sessionHeader) {
+        alert('Пожалуйста, авторизуйтесь для пополнения баланса.');
+        return;
+    }
+    depositModal.classList.add('show');
+});
+
+closeDepositModal.addEventListener('click', () => {
+    depositModal.classList.remove('show');
+    depositForm.reset();
+});
+
+// Отправка запроса на создание депозита
+depositForm.addEventListener('submit', async e => {
+    e.preventDefault();
+    const amount = normalizeNumber(document.getElementById('depositAmount').value);
+    const paymentMethod = document.getElementById('paymentMethod').value;
+
+    if (amount < 100) {
+        alert('Минимальная сумма пополнения — 100₽.');
+        return;
+    }
+
+    if (!sessionHeader) {
+        alert('Ошибка авторизации. Пожалуйста, перезагрузите страницу.');
+        return;
+    }
+
+    try {
+        const response = await fetch(
+            'https://jackhanmacsgolkgame.pythonanywhere.com/ru/payments/deposits/',
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...sessionHeader
+                },
+                body: JSON.stringify({
+                    amount: amount,
+                    payment_method: paymentMethod
+                })
+            }
+        );
+
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.error || 'Ошибка при создании платежа');
+        }
+
+        if (data.confirmation_url) {
+            window.location.href = data.confirmation_url;
+        } else {
+            throw new Error('Не получен URL для оплаты');
+        }
+    } catch (error) {
+        console.error('Ошибка пополнения:', error);
+        alert('Не удалось инициировать пополнение. Попробуйте снова.');
+    }
+});
+</script>
+</body>
+</html>
